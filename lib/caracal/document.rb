@@ -148,6 +148,7 @@ module Caracal
         render_settings(zip)
         render_styles(zip)
         render_document(zip)
+        render_header_relationships(zip) # Must go here: Depends on header renderer
         render_relationships(zip)   # Must go here: Depends on document renderer
         render_media(zip)           # Must go here: Depends on document renderer
         render_numbering(zip)       # Must go here: Depends on document renderer
@@ -219,9 +220,15 @@ module Caracal
       zip.write(content)
     end
 
+    def render_header_relationships(zip)
+      content = ::Caracal::Renderers::RelationshipsRenderer.new(self, header_relationships).to_xml
+
+      zip.put_next_entry('word/_rels/header1.xml.rels')
+      zip.write(content)
+    end
 
     def render_media(zip)
-      images = relationships.select { |r| r.relationship_type == :image }
+      images = (relationships + header_relationships).select { |r| r.relationship_type == :image }
       images.each do |rel|
         if rel.relationship_data.to_s.size > 0
           content = rel.relationship_data

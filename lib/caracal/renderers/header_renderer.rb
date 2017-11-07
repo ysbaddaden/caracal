@@ -1,3 +1,4 @@
+require 'delegate'
 require 'nokogiri'
 
 require 'caracal/renderers/xml_renderer'
@@ -5,7 +6,30 @@ require 'caracal/renderers/xml_renderer'
 
 module Caracal
   module Renderers
-    class HeaderRenderer < XmlRenderer
+    class HeaderRenderer < DocumentRenderer
+      # :nodoc:
+      class DocumentDecorator < SimpleDelegator
+        # We decorate the document to catch relationships, since they are
+        # related to the header not the document.
+
+        include Caracal::Core::Relationships
+
+        def initialize(doc)
+          doc.header_relationships = relationships
+          super doc
+        end
+      end
+
+      # This method instantiates a new verison of this renderer.
+      #
+      def initialize(doc)
+        unless doc.is_a?(Caracal::Document)
+          raise NoDocumentError, 'renderers must receive a reference to a valid Caracal document object.'
+        end
+
+        @document = DocumentDecorator.new(doc)
+      end
+
 
       #-------------------------------------------------------------
       # Public Methods
@@ -13,36 +37,18 @@ module Caracal
 
       # This method produces the xml required for the `word/settings.xml`
       # sub-document.
-      
+
       def to_xml
         builder = ::Nokogiri::XML::Builder.with(declaration_xml) do |xml|
-          xml['w'].ftr root_options do
-            xml['w'].p paragraph_options do
-              xml['w'].pPr do
-                xml['w'].contextualSpacing({ 'w:val' => '0' })
-                xml['w'].jc({ 'w:val' => "#{ document.header_align }" })
-              end
-              unless document.header_text.nil?
-                xml['w'].r run_options do
-                  xml['w'].rPr do
-                    xml['w'].rStyle({ 'w:val' => 'Header' })
-                  end
-                  xml['w'].t({ 'xml:space' => 'preserve' }) do
-                    xml.text "#{ document.header_text } "
-                  end
-                end
-              end
-              xml['w'].r run_options do
-                xml['w'].rPr do
-                  xml['w'].rtl({ 'w:val' => '0' })
-                end
-              end
+          xml['w'].hdr root_options do
+            document.header_contents.each do |m|
+              method = render_method_for_model(m)
+              send(method, xml, m)
             end
           end
         end
         builder.to_xml(save_options)
       end
-
 
       #-------------------------------------------------------------
       # Private Methods
