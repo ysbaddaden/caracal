@@ -15,9 +15,6 @@ module Caracal
           # Configuration
           #-------------------------------------------------------------
 
-          const_set(:DEFAULT_HEADER_ALIGN, :center)
-
-          attr_reader :header_align
           attr_reader :header_show
           attr_reader :header_contents
           attr_reader :header_relationships
@@ -47,11 +44,10 @@ module Caracal
 
             model = Caracal::Core::Models::HeaderModel.new(options, &block)
             if model.valid?
-              @header_align    = model.header_align
               @header_show     = model.header_show
               @header_contents = model.contents
             else
-              raise Caracal::Errors::InvalidModelError, 'header :align parameter must be :left, :center, or :right'
+              @header_show = false
             end
             model
           end

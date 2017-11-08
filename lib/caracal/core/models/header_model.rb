@@ -13,11 +13,9 @@ module Caracal
         #-------------------------------------------------------------
 
         # constants
-        const_set(:DEFAULT_HEADER_ALIGN, :center)
-        const_set(:DEFAULT_HEADER_SHOW,  false)
+        const_set(:DEFAULT_HEADER_SHOW, false)
 
         # accessors
-        attr_reader :header_align
         attr_reader :header_show
         attr_reader :page_width
         attr_reader :page_margin_left
@@ -25,7 +23,6 @@ module Caracal
 
         # initialization
         def initialize(options={}, &block)
-          @header_align  = DEFAULT_HEADER_ALIGN
           @header_show   = DEFAULT_HEADER_SHOW
 
           if content = options.delete(:content)
@@ -49,10 +46,6 @@ module Caracal
 
         #=============== SETTERS ==============================
 
-        def align(value)
-          @header_align = value.to_s.to_sym
-        end
-
         def show(value)
           @header_show = !!value
         end
@@ -69,7 +62,7 @@ module Caracal
         #=============== VALIDATION ===========================
 
         def valid?
-          (!header_show || [:left, :center, :right].include?(header_align))
+          header_show
         end
 
 
@@ -79,7 +72,7 @@ module Caracal
         private
 
         def option_keys
-          [:align, :content, :show, :width, :margin_left, :margin_right]
+          [:content, :show, :width, :margin_left, :margin_right]
         end
       end
     end
